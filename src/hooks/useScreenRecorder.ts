@@ -51,6 +51,7 @@ type UseScreenRecorderReturn = {
 	setSystemAudioEnabled: (enabled: boolean) => void;
 	webcamEnabled: boolean;
 	setWebcamEnabled: (enabled: boolean) => Promise<boolean>;
+	webcamPreviewStream: MediaStream | null;
 };
 
 type RecorderHandle = {
@@ -80,6 +81,10 @@ function createRecorderHandle(stream: MediaStream, options: MediaRecorderOptions
 	return { recorder, recordedBlobPromise };
 }
 
+function hasLiveVideoTrack(stream: MediaStream | null): stream is MediaStream {
+	return Boolean(stream?.getVideoTracks().some((track) => track.readyState === "live"));
+}
+
 export function useScreenRecorder(): UseScreenRecorderReturn {
 	const t = useScopedT("editor");
 	const [recording, setRecording] = useState(false);
@@ -87,6 +92,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const [microphoneDeviceId, setMicrophoneDeviceId] = useState<string | undefined>(undefined);
 	const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
 	const [webcamEnabled, setWebcamEnabledState] = useState(false);
+	const [webcamPreviewStream, setWebcamPreviewStream] = useState<MediaStream | null>(null);
 	const screenRecorder = useRef<RecorderHandle | null>(null);
 	const webcamRecorder = useRef<RecorderHandle | null>(null);
 	const stream = useRef<MediaStream | null>(null);
@@ -100,6 +106,33 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const allowAutoFinalize = useRef(false);
 	const discardRecordingId = useRef<number | null>(null);
 	const restarting = useRef(false);
+
+	const stopWebcamStream = useCallback(() => {
+		if (webcamStream.current) {
+			webcamStream.current.getTracks().forEach((track) => track.stop());
+			webcamStream.current = null;
+		}
+		setWebcamPreviewStream(null);
+	}, []);
+
+	const ensureWebcamStream = useCallback(async () => {
+		if (hasLiveVideoTrack(webcamStream.current)) {
+			return webcamStream.current;
+		}
+
+		stopWebcamStream();
+		const nextStream = await navigator.mediaDevices.getUserMedia({
+			audio: false,
+			video: {
+				width: { ideal: WEBCAM_TARGET_WIDTH },
+				height: { ideal: WEBCAM_TARGET_HEIGHT },
+				frameRate: { ideal: WEBCAM_TARGET_FRAME_RATE, max: WEBCAM_TARGET_FRAME_RATE },
+			},
+		});
+		webcamStream.current = nextStream;
+		setWebcamPreviewStream(nextStream);
+		return nextStream;
+	}, [stopWebcamStream]);
 
 	const selectMimeType = () => {
 		const preferred = [
@@ -129,35 +162,38 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		return Math.round(BITRATE_BASE * highFrameRateBoost);
 	};
 
-	const teardownMedia = useCallback(() => {
-		if (stream.current) {
-			stream.current.getTracks().forEach((track) => track.stop());
-			stream.current = null;
-		}
-		if (screenStream.current) {
-			screenStream.current.getTracks().forEach((track) => track.stop());
-			screenStream.current = null;
-		}
-		if (microphoneStream.current) {
-			microphoneStream.current.getTracks().forEach((track) => track.stop());
-			microphoneStream.current = null;
-		}
-		if (webcamStream.current) {
-			webcamStream.current.getTracks().forEach((track) => track.stop());
-			webcamStream.current = null;
-		}
-		if (mixingContext.current) {
-			mixingContext.current.close().catch(() => {
-				// Ignore close errors during recorder teardown.
-			});
-			mixingContext.current = null;
-		}
-	}, []);
+	const teardownMedia = useCallback(
+		(options?: { preserveWebcam?: boolean }) => {
+			if (stream.current) {
+				stream.current.getTracks().forEach((track) => track.stop());
+				stream.current = null;
+			}
+			if (screenStream.current) {
+				screenStream.current.getTracks().forEach((track) => track.stop());
+				screenStream.current = null;
+			}
+			if (microphoneStream.current) {
+				microphoneStream.current.getTracks().forEach((track) => track.stop());
+				microphoneStream.current = null;
+			}
+			if (!options?.preserveWebcam) {
+				stopWebcamStream();
+			}
+			if (mixingContext.current) {
+				mixingContext.current.close().catch(() => {
+					// Ignore close errors during recorder teardown.
+				});
+				mixingContext.current = null;
+			}
+		},
+		[stopWebcamStream],
+	);
 
 	const setWebcamEnabled = useCallback(
 		async (enabled: boolean) => {
 			if (!enabled) {
 				setWebcamEnabledState(false);
+				stopWebcamStream();
 				return true;
 			}
 
@@ -172,10 +208,19 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				return false;
 			}
 
-			setWebcamEnabledState(true);
-			return true;
+			try {
+				await ensureWebcamStream();
+				setWebcamEnabledState(true);
+				return true;
+			} catch (cameraError) {
+				console.warn("Failed to initialize webcam preview:", cameraError);
+				stopWebcamStream();
+				setWebcamEnabledState(false);
+				toast.error(t("recording.cameraDenied"));
+				return false;
+			}
 		},
-		[t],
+		[ensureWebcamStream, stopWebcamStream, t],
 	);
 
 	const finalizeRecording = useCallback(
@@ -197,7 +242,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				webcamRecorder.current = null;
 			}
 
-			teardownMedia();
+			teardownMedia({ preserveWebcam: webcamEnabled });
 			setRecording(false);
 			window.electronAPI?.setRecordingState(false);
 			window.electronAPI?.hideWebcamPreview();
@@ -261,7 +306,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				}
 			})();
 		},
-		[teardownMedia],
+		[teardownMedia, webcamEnabled],
 	);
 
 	const stopRecording = useRef(() => {
@@ -408,20 +453,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 			if (webcamEnabled) {
 				try {
-					webcamStream.current = await navigator.mediaDevices.getUserMedia({
-						audio: false,
-						video: {
-							width: { ideal: WEBCAM_TARGET_WIDTH },
-							height: { ideal: WEBCAM_TARGET_HEIGHT },
-							frameRate: { ideal: WEBCAM_TARGET_FRAME_RATE, max: WEBCAM_TARGET_FRAME_RATE },
-						},
-					});
+					await ensureWebcamStream();
 				} catch (cameraError) {
 					console.warn("Failed to get webcam access:", cameraError);
-					if (webcamStream.current) {
-						webcamStream.current.getTracks().forEach((track) => track.stop());
-						webcamStream.current = null;
-					}
+					stopWebcamStream();
 					setWebcamEnabledState(false);
 					toast.error(t("recording.cameraDenied"));
 				}
@@ -549,7 +584,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			setRecording(false);
 			screenRecorder.current = null;
 			webcamRecorder.current = null;
-			teardownMedia();
+			teardownMedia({ preserveWebcam: webcamEnabled });
 			window.electronAPI?.hideWebcamPreview();
 		}
 	};
@@ -608,5 +643,6 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		setSystemAudioEnabled,
 		webcamEnabled,
 		setWebcamEnabled,
+		webcamPreviewStream,
 	};
 }

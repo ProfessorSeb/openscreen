@@ -14,7 +14,7 @@ export interface Size {
 	height: number;
 }
 
-export type WebcamLayoutPreset = "picture-in-picture" | "vertical-stack";
+export type WebcamLayoutPreset = "picture-in-picture" | "camera-bubble" | "vertical-stack";
 
 export interface WebcamLayoutShadow {
 	color: string;
@@ -35,6 +35,8 @@ interface OverlayTransform {
 	marginFraction: number;
 	minMargin: number;
 	minSize: number;
+	anchor?: "bottom-right" | "bottom-left";
+	shape?: "rect" | "circle";
 }
 
 interface StackTransform {
@@ -68,6 +70,31 @@ const WEBCAM_LAYOUT_PRESET_MAP: Record<WebcamLayoutPreset, WebcamLayoutPresetDef
 			marginFraction: MARGIN_FRACTION,
 			minMargin: 0,
 			minSize: 0,
+			anchor: "bottom-right",
+			shape: "rect",
+		},
+		borderRadius: {
+			max: MAX_BORDER_RADIUS,
+			min: 12,
+			fraction: 0.12,
+		},
+		shadow: {
+			color: "rgba(0,0,0,0.35)",
+			blur: 24,
+			offsetX: 0,
+			offsetY: 10,
+		},
+	},
+	"camera-bubble": {
+		label: "Camera Bubble",
+		transform: {
+			type: "overlay",
+			maxStageFraction: MAX_STAGE_FRACTION,
+			marginFraction: MARGIN_FRACTION,
+			minMargin: 0,
+			minSize: 0,
+			anchor: "bottom-left",
+			shape: "circle",
 		},
 		borderRadius: {
 			max: MAX_BORDER_RADIUS,
@@ -104,14 +131,12 @@ export const WEBCAM_LAYOUT_PRESETS = Object.entries(WEBCAM_LAYOUT_PRESET_MAP).ma
 );
 
 export function getWebcamLayoutPresetDefinition(
-	preset: WebcamLayoutPreset = "picture-in-picture",
+	preset: WebcamLayoutPreset = "camera-bubble",
 ): WebcamLayoutPresetDefinition {
 	return WEBCAM_LAYOUT_PRESET_MAP[preset];
 }
 
-export function getWebcamLayoutCssBoxShadow(
-	preset: WebcamLayoutPreset = "picture-in-picture",
-): string {
+export function getWebcamLayoutCssBoxShadow(preset: WebcamLayoutPreset = "camera-bubble"): string {
 	const shadow = getWebcamLayoutPresetDefinition(preset).shadow;
 	return shadow
 		? `${shadow.offsetX}px ${shadow.offsetY}px ${shadow.blur}px ${shadow.color}`
@@ -131,7 +156,7 @@ export function computeCompositeLayout(params: {
 		maxContentSize = canvasSize,
 		screenSize,
 		webcamSize,
-		layoutPreset = "picture-in-picture",
+		layoutPreset = "camera-bubble",
 		webcamPosition,
 	} = params;
 	const { width: canvasWidth, height: canvasHeight } = canvasSize;
@@ -197,9 +222,12 @@ export function computeCompositeLayout(params: {
 	);
 	const maxWidth = Math.max(transform.minSize, canvasWidth * transform.maxStageFraction);
 	const maxHeight = Math.max(transform.minSize, canvasHeight * transform.maxStageFraction);
+	const isCircle = transform.shape === "circle";
 	const scale = Math.min(maxWidth / webcamWidth, maxHeight / webcamHeight);
-	const width = Math.round(webcamWidth * scale);
-	const height = Math.round(webcamHeight * scale);
+	const width = isCircle
+		? Math.round(Math.max(transform.minSize, Math.min(maxWidth, maxHeight)))
+		: Math.round(webcamWidth * scale);
+	const height = isCircle ? width : Math.round(webcamHeight * scale);
 
 	let webcamX: number;
 	let webcamY: number;
@@ -212,8 +240,11 @@ export function computeCompositeLayout(params: {
 		webcamX = Math.max(0, Math.min(canvasWidth - width, webcamX));
 		webcamY = Math.max(0, Math.min(canvasHeight - height, webcamY));
 	} else {
-		// Default: bottom-right with margin
-		webcamX = Math.max(0, Math.round(canvasWidth - margin - width));
+		const anchor = transform.anchor ?? "bottom-right";
+		webcamX =
+			anchor === "bottom-left"
+				? Math.max(0, margin)
+				: Math.max(0, Math.round(canvasWidth - margin - width));
 		webcamY = Math.max(0, Math.round(canvasHeight - margin - height));
 	}
 
@@ -224,13 +255,15 @@ export function computeCompositeLayout(params: {
 			y: webcamY,
 			width,
 			height,
-			borderRadius: Math.min(
-				preset.borderRadius.max,
-				Math.max(
-					preset.borderRadius.min,
-					Math.round(Math.min(width, height) * preset.borderRadius.fraction),
-				),
-			),
+			borderRadius: isCircle
+				? Math.round(Math.min(width, height) / 2)
+				: Math.min(
+						preset.borderRadius.max,
+						Math.max(
+							preset.borderRadius.min,
+							Math.round(Math.min(width, height) * preset.borderRadius.fraction),
+						),
+					),
 		},
 	};
 }

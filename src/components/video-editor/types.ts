@@ -3,7 +3,7 @@ import type { WebcamLayoutPreset } from "@/lib/compositeLayout";
 export type ZoomDepth = 1 | 2 | 3 | 4 | 5 | 6;
 export type { WebcamLayoutPreset };
 
-export const DEFAULT_WEBCAM_LAYOUT_PRESET: WebcamLayoutPreset = "picture-in-picture";
+export const DEFAULT_WEBCAM_LAYOUT_PRESET: WebcamLayoutPreset = "camera-bubble";
 
 export interface WebcamPosition {
 	cx: number; // normalized horizontal center (0-1)

@@ -105,6 +105,10 @@ export interface VideoPlaybackRef {
 	pause: () => void;
 }
 
+function isFloatingWebcamLayout(preset: WebcamLayoutPreset): boolean {
+	return preset !== "vertical-stack";
+}
+
 const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 	(
 		{
@@ -415,7 +419,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 
 		const handleWebcamPointerDown = (event: React.PointerEvent<HTMLVideoElement>) => {
 			if (isPlayingRef.current) return;
-			if (webcamLayoutPreset !== "picture-in-picture") return;
+			if (!isFloatingWebcamLayout(webcamLayoutPreset)) return;
 			event.preventDefault();
 			event.stopPropagation();
 			isDraggingWebcamRef.current = true;
@@ -1158,7 +1162,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 					<video
 						ref={webcamVideoRef}
 						src={webcamVideoPath}
-						className={`absolute object-cover ${webcamLayoutPreset === "picture-in-picture" ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"}`}
+						className={`absolute object-cover ${isFloatingWebcamLayout(webcamLayoutPreset) ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"}`}
 						style={{
 							left: webcamLayout?.x ?? 0,
 							top: webcamLayout?.y ?? 0,

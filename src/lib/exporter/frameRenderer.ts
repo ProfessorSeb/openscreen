@@ -87,6 +87,46 @@ interface LayoutCache {
 	webcamRect: StyledRenderRect | null;
 }
 
+function drawSourceCover(
+	ctx: CanvasRenderingContext2D,
+	source: CanvasImageSource,
+	sourceWidth: number,
+	sourceHeight: number,
+	targetRect: StyledRenderRect,
+): void {
+	if (sourceWidth <= 0 || sourceHeight <= 0) {
+		ctx.drawImage(source, targetRect.x, targetRect.y, targetRect.width, targetRect.height);
+		return;
+	}
+
+	const sourceAspect = sourceWidth / sourceHeight;
+	const targetAspect = targetRect.width / targetRect.height;
+	let sx = 0;
+	let sy = 0;
+	let sw = sourceWidth;
+	let sh = sourceHeight;
+
+	if (sourceAspect > targetAspect) {
+		sw = sourceHeight * targetAspect;
+		sx = (sourceWidth - sw) / 2;
+	} else if (sourceAspect < targetAspect) {
+		sh = sourceWidth / targetAspect;
+		sy = (sourceHeight - sh) / 2;
+	}
+
+	ctx.drawImage(
+		source,
+		sx,
+		sy,
+		sw,
+		sh,
+		targetRect.x,
+		targetRect.y,
+		targetRect.width,
+		targetRect.height,
+	);
+}
+
 // Renders video frames with all effects (background, zoom, crop, blur, shadow) to an offscreen canvas for export.
 
 export class FrameRenderer {
@@ -687,12 +727,12 @@ export class FrameRenderer {
 			ctx.fillStyle = "#000000";
 			ctx.fill();
 			ctx.clip();
-			ctx.drawImage(
+			drawSourceCover(
+				ctx,
 				webcamFrame as unknown as CanvasImageSource,
-				webcamRect.x,
-				webcamRect.y,
-				webcamRect.width,
-				webcamRect.height,
+				webcamFrame.displayWidth || webcamFrame.codedWidth,
+				webcamFrame.displayHeight || webcamFrame.codedHeight,
+				webcamRect,
 			);
 			ctx.restore();
 		}

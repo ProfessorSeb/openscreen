@@ -147,6 +147,20 @@ interface SettingsPanelProps {
 
 export default SettingsPanel;
 
+function getWebcamPresetLabel(
+	preset: WebcamLayoutPreset,
+	t: ReturnType<typeof useScopedT>,
+): string {
+	switch (preset) {
+		case "camera-bubble":
+			return t("layout.cameraBubble");
+		case "vertical-stack":
+			return t("layout.verticalStack");
+		default:
+			return t("layout.pictureInPicture");
+	}
+}
+
 const ZOOM_DEPTH_OPTIONS: Array<{ depth: ZoomDepth; label: string }> = [
 	{ depth: 1, label: "1.25×" },
 	{ depth: 2, label: "1.5×" },
@@ -209,7 +223,7 @@ export function SettingsPanel({
 	onSpeedChange,
 	onSpeedDelete,
 	hasWebcam = false,
-	webcamLayoutPreset = "picture-in-picture",
+	webcamLayoutPreset = "camera-bubble",
 	onWebcamLayoutPresetChange,
 }: SettingsPanelProps) {
 	const t = useScopedT("settings");
@@ -611,13 +625,10 @@ export function SettingsPanel({
 										<SelectContent>
 											{WEBCAM_LAYOUT_PRESETS.filter(
 												(preset) =>
-													preset.value === "picture-in-picture" ||
-													isPortraitAspectRatio(aspectRatio),
+													preset.value !== "vertical-stack" || isPortraitAspectRatio(aspectRatio),
 											).map((preset) => (
 												<SelectItem key={preset.value} value={preset.value} className="text-xs">
-													{preset.value === "picture-in-picture"
-														? t("layout.pictureInPicture")
-														: t("layout.verticalStack")}
+													{getWebcamPresetLabel(preset.value, t)}
 												</SelectItem>
 											))}
 										</SelectContent>

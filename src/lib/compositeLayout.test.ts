@@ -17,6 +17,22 @@ describe("computeCompositeLayout", () => {
 		expect(layout!.webcamRect!.y).toBeGreaterThan(1080 / 2);
 	});
 
+	it("anchors the camera bubble in the lower-left corner as a circle", () => {
+		const layout = computeCompositeLayout({
+			canvasSize: { width: 1920, height: 1080 },
+			screenSize: { width: 1920, height: 1080 },
+			webcamSize: { width: 1280, height: 720 },
+			layoutPreset: "camera-bubble",
+		});
+
+		expect(layout).not.toBeNull();
+		expect(layout!.webcamRect).not.toBeNull();
+		expect(layout!.webcamRect!.x).toBeLessThan(1920 / 4);
+		expect(layout!.webcamRect!.y).toBeGreaterThan(1080 / 2);
+		expect(layout!.webcamRect!.width).toBe(layout!.webcamRect!.height);
+		expect(layout!.webcamRect!.borderRadius).toBe(Math.round(layout!.webcamRect!.width / 2));
+	});
+
 	it("keeps the overlay within the configured stage fraction while preserving aspect ratio", () => {
 		const layout = computeCompositeLayout({
 			canvasSize: { width: 1280, height: 720 },

@@ -1565,7 +1565,7 @@ export default function VideoEditor() {
 											aspectRatio: ar,
 											webcamLayoutPreset:
 												!isPortraitAspectRatio(ar) && webcamLayoutPreset === "vertical-stack"
-													? "picture-in-picture"
+													? "camera-bubble"
 													: webcamLayoutPreset,
 										})
 									}
