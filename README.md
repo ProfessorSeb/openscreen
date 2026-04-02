@@ -44,15 +44,18 @@ Download the latest installer for your platform from the [GitHub Releases](https
 
 ### macOS
 
-If you encounter issues with macOS Gatekeeper blocking the app (since it does not come with a developer certificate), you can bypass this by running the following command in your terminal after installation:
-
-```bash
-xattr -rd com.apple.quarantine /Applications/Openscreen.app
-```
-
-Note: Give your terminal Full Disk Access in **System Settings > Privacy & Security** to grant you access and then run the above command.
-
-After running this command, proceed to **System Preferences > Security & Privacy** to grant the necessary permissions for "screen recording" and "accessibility". Once permissions are granted, you can launch the app.
+1. Download the `.dmg` file from the [Releases](https://github.com/siddharthvaddem/openscreen/releases) page.
+2. Open the `.dmg` and drag **Openscreen** into your **Applications** folder.
+3. **Bypass Gatekeeper** — the app is not signed with an Apple Developer certificate, so macOS will block it by default. Open **Terminal** and run:
+   ```bash
+   xattr -rd com.apple.quarantine /Applications/Openscreen.app
+   ```
+   > If the command fails with a permission error, first grant your terminal **Full Disk Access** in **System Settings > Privacy & Security > Full Disk Access**, then re-run the command.
+4. **Grant required permissions** — on first launch, macOS will ask for permissions. You can also enable them manually in **System Settings > Privacy & Security**:
+   - **Screen Recording** — required to capture your screen.
+   - **Accessibility** — required for zoom and click tracking.
+   - **Microphone** — required if you want to record voiceover audio.
+5. Launch **Openscreen** from your Applications folder. You're all set!
 
 ### Linux
 
