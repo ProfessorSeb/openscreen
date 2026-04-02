@@ -200,6 +200,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			teardownMedia();
 			setRecording(false);
 			window.electronAPI?.setRecordingState(false);
+			window.electronAPI?.hideWebcamPreview();
 
 			void (async () => {
 				try {
@@ -513,6 +514,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			setRecording(true);
 			window.electronAPI?.setRecordingState(true);
 
+			if (webcamStream.current) {
+				window.electronAPI?.showWebcamPreview();
+			}
+
 			const activeScreenRecorder = screenRecorder.current;
 			const activeWebcamRecorder = webcamRecorder.current;
 			const activeRecordingId = recordingId.current;
@@ -545,6 +550,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			screenRecorder.current = null;
 			webcamRecorder.current = null;
 			teardownMedia();
+			window.electronAPI?.hideWebcamPreview();
 		}
 	};
 

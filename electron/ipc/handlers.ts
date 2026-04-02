@@ -217,6 +217,8 @@ export function registerIpcHandlers(
 	getMainWindow: () => BrowserWindow | null,
 	getSourceSelectorWindow: () => BrowserWindow | null,
 	onRecordingStateChange?: (recording: boolean, sourceName: string) => void,
+	showWebcamPreview?: () => void,
+	hideWebcamPreview?: () => void,
 ) {
 	ipcMain.handle("get-sources", async (_, opts) => {
 		const sources = await desktopCapturer.getSources(opts);
@@ -761,6 +763,14 @@ export function registerIpcHandlers(
 
 	ipcMain.handle("get-platform", () => {
 		return process.platform;
+	});
+
+	ipcMain.handle("show-webcam-preview", () => {
+		if (showWebcamPreview) showWebcamPreview();
+	});
+
+	ipcMain.handle("hide-webcam-preview", () => {
+		if (hideWebcamPreview) hideWebcamPreview();
 	});
 
 	ipcMain.handle("get-shortcuts", async () => {

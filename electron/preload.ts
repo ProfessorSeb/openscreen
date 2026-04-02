@@ -118,6 +118,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	setLocale: (locale: string) => {
 		return ipcRenderer.invoke("set-locale", locale);
 	},
+	showWebcamPreview: () => {
+		return ipcRenderer.invoke("show-webcam-preview");
+	},
+	hideWebcamPreview: () => {
+		return ipcRenderer.invoke("hide-webcam-preview");
+	},
 	setMicrophoneExpanded: (expanded: boolean) => {
 		ipcRenderer.send("hud:setMicrophoneExpanded", expanded);
 	},

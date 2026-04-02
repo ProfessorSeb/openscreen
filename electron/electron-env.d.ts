@@ -137,6 +137,8 @@ interface Window {
 		setHasUnsavedChanges: (hasChanges: boolean) => void;
 		onRequestSaveBeforeClose: (callback: () => Promise<boolean> | boolean) => () => void;
 		setLocale: (locale: string) => Promise<void>;
+		showWebcamPreview: () => Promise<void>;
+		hideWebcamPreview: () => Promise<void>;
 	};
 }
 

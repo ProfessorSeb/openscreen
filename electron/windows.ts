@@ -10,6 +10,7 @@ const RENDERER_DIST = path.join(APP_ROOT, "dist");
 const HEADLESS = process.env["HEADLESS"] === "true";
 
 let hudOverlayWindow: BrowserWindow | null = null;
+let webcamPreviewWindow: BrowserWindow | null = null;
 
 ipcMain.on("hud-overlay-hide", () => {
 	if (hudOverlayWindow && !hudOverlayWindow.isDestroyed()) {
@@ -118,6 +119,65 @@ export function createEditorWindow(): BrowserWindow {
 	}
 
 	return win;
+}
+
+export function createWebcamPreviewWindow(): BrowserWindow {
+	if (webcamPreviewWindow && !webcamPreviewWindow.isDestroyed()) {
+		webcamPreviewWindow.show();
+		return webcamPreviewWindow;
+	}
+
+	const primaryDisplay = screen.getPrimaryDisplay();
+	const { workArea } = primaryDisplay;
+
+	const windowSize = 180;
+	const margin = 20;
+	const x = Math.floor(workArea.x + workArea.width - windowSize - margin);
+	const y = Math.floor(workArea.y + workArea.height - windowSize - margin);
+
+	const win = new BrowserWindow({
+		width: windowSize,
+		height: windowSize,
+		x,
+		y,
+		frame: false,
+		transparent: true,
+		resizable: false,
+		alwaysOnTop: true,
+		skipTaskbar: true,
+		hasShadow: false,
+		show: !HEADLESS,
+		webPreferences: {
+			preload: path.join(__dirname, "preload.mjs"),
+			nodeIntegration: false,
+			contextIsolation: true,
+		},
+	});
+
+	webcamPreviewWindow = win;
+
+	win.on("closed", () => {
+		if (webcamPreviewWindow === win) {
+			webcamPreviewWindow = null;
+		}
+	});
+
+	if (VITE_DEV_SERVER_URL) {
+		win.loadURL(VITE_DEV_SERVER_URL + "?windowType=webcam-preview");
+	} else {
+		win.loadFile(path.join(RENDERER_DIST, "index.html"), {
+			query: { windowType: "webcam-preview" },
+		});
+	}
+
+	return win;
+}
+
+export function closeWebcamPreviewWindow(): void {
+	if (webcamPreviewWindow && !webcamPreviewWindow.isDestroyed()) {
+		webcamPreviewWindow.close();
+	}
+	webcamPreviewWindow = null;
 }
 
 export function createSourceSelectorWindow(): BrowserWindow {
