@@ -20,9 +20,11 @@ import {
 } from "react";
 import { getAssetPath } from "@/lib/assetPath";
 import {
+	getCssClipPath,
 	getWebcamLayoutCssBoxShadow,
 	type Size,
 	type StyledRenderRect,
+	type WebcamClipShape,
 	type WebcamLayoutPreset,
 } from "@/lib/compositeLayout";
 import {
@@ -64,6 +66,10 @@ interface VideoPlaybackProps {
 	webcamVideoPath?: string;
 	webcamLayoutPreset: WebcamLayoutPreset;
 	webcamPosition?: { cx: number; cy: number } | null;
+	webcamCornerRadius?: number;
+	webcamBorderWidth?: number;
+	webcamBorderColor?: string;
+	webcamClipShape?: WebcamClipShape;
 	onWebcamPositionChange?: (position: { cx: number; cy: number }) => void;
 	onWebcamPositionDragEnd?: () => void;
 	onDurationChange: (duration: number) => void;
@@ -116,6 +122,10 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			webcamVideoPath,
 			webcamLayoutPreset,
 			webcamPosition,
+			webcamCornerRadius,
+			webcamBorderWidth = 0,
+			webcamBorderColor = "#ffffff",
+			webcamClipShape = "rounded-rect",
 			onWebcamPositionChange,
 			onWebcamPositionDragEnd,
 			onDurationChange,
@@ -276,6 +286,8 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				webcamDimensions,
 				webcamLayoutPreset,
 				webcamPosition,
+				customWebcamCornerRadius:
+					webcamLayoutPreset === "custom-shape" ? webcamCornerRadius : undefined,
 			});
 
 			if (result) {
@@ -306,6 +318,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			webcamDimensions,
 			webcamLayoutPreset,
 			webcamPosition,
+			webcamCornerRadius,
 		]);
 
 		useEffect(() => {
@@ -1168,8 +1181,22 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 							top: webcamLayout?.y ?? 0,
 							width: webcamLayout?.width ?? 0,
 							height: webcamLayout?.height ?? 0,
-							borderRadius: webcamLayout?.borderRadius ?? 0,
+							borderRadius:
+								webcamLayoutPreset === "custom-shape" && getCssClipPath(webcamClipShape)
+									? 0
+									: (webcamLayout?.borderRadius ?? 0),
+							clipPath:
+								webcamLayoutPreset === "custom-shape"
+									? (getCssClipPath(webcamClipShape) ?? undefined)
+									: undefined,
 							boxShadow: webcamCssBoxShadow,
+							border:
+								webcamLayoutPreset === "custom-shape" &&
+								webcamBorderWidth > 0 &&
+								!getCssClipPath(webcamClipShape)
+									? `${webcamBorderWidth}px solid ${webcamBorderColor}`
+									: undefined,
+							boxSizing: "border-box",
 							zIndex: 20,
 							opacity: webcamLayout ? 1 : 0,
 							backgroundColor: "#000",

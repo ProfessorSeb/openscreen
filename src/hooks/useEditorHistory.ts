@@ -4,6 +4,7 @@ import type {
 	CropRegion,
 	SpeedRegion,
 	TrimRegion,
+	WebcamClipShape,
 	WebcamLayoutPreset,
 	WebcamPosition,
 	ZoomRegion,
@@ -32,6 +33,10 @@ export interface EditorState {
 	aspectRatio: AspectRatio;
 	webcamLayoutPreset: WebcamLayoutPreset;
 	webcamPosition: WebcamPosition | null;
+	webcamCornerRadius: number;
+	webcamBorderWidth: number;
+	webcamBorderColor: string;
+	webcamClipShape: WebcamClipShape;
 }
 
 export const INITIAL_EDITOR_STATE: EditorState = {
@@ -49,6 +54,10 @@ export const INITIAL_EDITOR_STATE: EditorState = {
 	aspectRatio: "16:9",
 	webcamLayoutPreset: DEFAULT_WEBCAM_LAYOUT_PRESET,
 	webcamPosition: DEFAULT_WEBCAM_POSITION,
+	webcamCornerRadius: 50,
+	webcamBorderWidth: 0,
+	webcamBorderColor: "#ffffff",
+	webcamClipShape: "rounded-rect" as WebcamClipShape,
 };
 
 type StateUpdate = Partial<EditorState> | ((prev: EditorState) => Partial<EditorState>);

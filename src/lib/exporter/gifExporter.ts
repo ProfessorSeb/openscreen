@@ -42,6 +42,10 @@ interface GifExporterConfig {
 	cropRegion: CropRegion;
 	webcamLayoutPreset?: WebcamLayoutPreset;
 	webcamPosition?: { cx: number; cy: number } | null;
+	webcamCornerRadius?: number;
+	webcamBorderWidth?: number;
+	webcamBorderColor?: string;
+	webcamClipShape?: import("@/lib/compositeLayout").WebcamClipShape;
 	annotationRegions?: AnnotationRegion[];
 	previewWidth?: number;
 	previewHeight?: number;
@@ -142,6 +146,10 @@ export class GifExporter {
 				webcamSize: webcamInfo ? { width: webcamInfo.width, height: webcamInfo.height } : null,
 				webcamLayoutPreset: this.config.webcamLayoutPreset,
 				webcamPosition: this.config.webcamPosition,
+				webcamCornerRadius: this.config.webcamCornerRadius,
+				webcamBorderWidth: this.config.webcamBorderWidth,
+				webcamBorderColor: this.config.webcamBorderColor,
+				webcamClipShape: this.config.webcamClipShape,
 				annotationRegions: this.config.annotationRegions,
 				speedRegions: this.config.speedRegions,
 				previewWidth: this.config.previewWidth,

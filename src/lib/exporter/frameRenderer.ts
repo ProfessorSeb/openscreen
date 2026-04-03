@@ -33,9 +33,11 @@ import {
 } from "@/components/video-editor/videoPlayback/zoomTransform";
 import {
 	computeCompositeLayout,
+	drawClipShapePath,
 	getWebcamLayoutPresetDefinition,
 	type Size,
 	type StyledRenderRect,
+	type WebcamClipShape,
 } from "@/lib/compositeLayout";
 import { renderAnnotations } from "./annotationRenderer";
 import {
@@ -62,6 +64,10 @@ interface FrameRenderConfig {
 	webcamSize?: Size | null;
 	webcamLayoutPreset?: WebcamLayoutPreset;
 	webcamPosition?: { cx: number; cy: number } | null;
+	webcamCornerRadius?: number;
+	webcamBorderWidth?: number;
+	webcamBorderColor?: string;
+	webcamClipShape?: WebcamClipShape;
 	annotationRegions?: AnnotationRegion[];
 	speedRegions?: SpeedRegion[];
 	previewWidth?: number;
@@ -481,6 +487,10 @@ export class FrameRenderer {
 			webcamSize: webcamFrame ? this.config.webcamSize : null,
 			layoutPreset: this.config.webcamLayoutPreset,
 			webcamPosition: this.config.webcamPosition,
+			customWebcamCornerRadius:
+				this.config.webcamLayoutPreset === "custom-shape"
+					? this.config.webcamCornerRadius
+					: undefined,
 		});
 		if (!compositeLayout) return;
 
@@ -708,15 +718,29 @@ export class FrameRenderer {
 		const webcamRect = this.layoutCache?.webcamRect ?? null;
 		if (webcamFrame && webcamRect) {
 			const preset = getWebcamLayoutPresetDefinition(this.config.webcamLayoutPreset);
+			const clipShape = this.config.webcamClipShape ?? "rounded-rect";
+			const isCustomShape = this.config.webcamLayoutPreset === "custom-shape";
 			ctx.save();
 			ctx.beginPath();
-			ctx.roundRect(
-				webcamRect.x,
-				webcamRect.y,
-				webcamRect.width,
-				webcamRect.height,
-				webcamRect.borderRadius,
-			);
+			if (isCustomShape) {
+				drawClipShapePath(
+					ctx,
+					clipShape,
+					webcamRect.x,
+					webcamRect.y,
+					webcamRect.width,
+					webcamRect.height,
+					webcamRect.borderRadius,
+				);
+			} else {
+				ctx.roundRect(
+					webcamRect.x,
+					webcamRect.y,
+					webcamRect.width,
+					webcamRect.height,
+					webcamRect.borderRadius,
+				);
+			}
 			ctx.closePath();
 			if (preset.shadow) {
 				ctx.shadowColor = preset.shadow.color;
@@ -735,6 +759,27 @@ export class FrameRenderer {
 				webcamRect,
 			);
 			ctx.restore();
+
+			// Draw border for custom-shape preset
+			const borderWidth = this.config.webcamBorderWidth ?? 0;
+			if (isCustomShape && borderWidth > 0) {
+				ctx.save();
+				ctx.beginPath();
+				drawClipShapePath(
+					ctx,
+					clipShape,
+					webcamRect.x,
+					webcamRect.y,
+					webcamRect.width,
+					webcamRect.height,
+					webcamRect.borderRadius,
+				);
+				ctx.closePath();
+				ctx.strokeStyle = this.config.webcamBorderColor ?? "#ffffff";
+				ctx.lineWidth = borderWidth;
+				ctx.stroke();
+				ctx.restore();
+			}
 		}
 	}
 

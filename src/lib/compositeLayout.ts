@@ -14,7 +14,133 @@ export interface Size {
 	height: number;
 }
 
-export type WebcamLayoutPreset = "picture-in-picture" | "camera-bubble" | "vertical-stack";
+export type WebcamLayoutPreset =
+	| "picture-in-picture"
+	| "camera-bubble"
+	| "vertical-stack"
+	| "custom-shape";
+
+export type WebcamClipShape =
+	| "rounded-rect"
+	| "circle"
+	| "triangle"
+	| "triangle-down"
+	| "diamond"
+	| "hexagon"
+	| "octagon"
+	| "star"
+	| "shield";
+
+export const WEBCAM_CLIP_SHAPES: WebcamClipShape[] = [
+	"rounded-rect",
+	"circle",
+	"triangle",
+	"triangle-down",
+	"diamond",
+	"hexagon",
+	"octagon",
+	"star",
+	"shield",
+];
+
+/**
+ * Returns polygon points as fractions (0-1) of width/height for a given shape.
+ * "rounded-rect" and "circle" return null — they use borderRadius instead.
+ */
+export function getClipPolygonPoints(shape: WebcamClipShape): [number, number][] | null {
+	switch (shape) {
+		case "rounded-rect":
+		case "circle":
+			return null;
+		case "triangle":
+			return [
+				[0.5, 0],
+				[1, 1],
+				[0, 1],
+			];
+		case "triangle-down":
+			return [
+				[0, 0],
+				[1, 0],
+				[0.5, 1],
+			];
+		case "diamond":
+			return [
+				[0.5, 0],
+				[1, 0.5],
+				[0.5, 1],
+				[0, 0.5],
+			];
+		case "hexagon":
+			return [
+				[0.25, 0],
+				[0.75, 0],
+				[1, 0.5],
+				[0.75, 1],
+				[0.25, 1],
+				[0, 0.5],
+			];
+		case "octagon":
+			return [
+				[0.29, 0],
+				[0.71, 0],
+				[1, 0.29],
+				[1, 0.71],
+				[0.71, 1],
+				[0.29, 1],
+				[0, 0.71],
+				[0, 0.29],
+			];
+		case "star": {
+			const points: [number, number][] = [];
+			for (let i = 0; i < 10; i++) {
+				const angle = (Math.PI / 2) * -1 + (i * Math.PI) / 5;
+				const r = i % 2 === 0 ? 0.5 : 0.2;
+				points.push([0.5 + r * Math.cos(angle), 0.5 + r * Math.sin(angle)]);
+			}
+			return points;
+		}
+		case "shield":
+			return [
+				[0, 0],
+				[1, 0],
+				[1, 0.6],
+				[0.5, 1],
+				[0, 0.6],
+			];
+	}
+}
+
+/** CSS clip-path polygon string for a given shape. Returns null for shapes using borderRadius. */
+export function getCssClipPath(shape: WebcamClipShape): string | null {
+	const points = getClipPolygonPoints(shape);
+	if (!points) return null;
+	return `polygon(${points.map(([x, y]) => `${(x * 100).toFixed(1)}% ${(y * 100).toFixed(1)}%`).join(", ")})`;
+}
+
+/** Draws the clip path onto a canvas 2D context for a given rect. Returns true if a polygon was drawn. */
+export function drawClipShapePath(
+	ctx: CanvasRenderingContext2D,
+	shape: WebcamClipShape,
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+	borderRadius: number,
+): boolean {
+	const points = getClipPolygonPoints(shape);
+	if (!points) {
+		// Use rounded rect
+		ctx.roundRect(x, y, width, height, borderRadius);
+		return false;
+	}
+	ctx.moveTo(x + points[0][0] * width, y + points[0][1] * height);
+	for (let i = 1; i < points.length; i++) {
+		ctx.lineTo(x + points[i][0] * width, y + points[i][1] * height);
+	}
+	ctx.closePath();
+	return true;
+}
 
 export interface WebcamLayoutShadow {
 	color: string;
@@ -121,6 +247,29 @@ const WEBCAM_LAYOUT_PRESET_MAP: Record<WebcamLayoutPreset, WebcamLayoutPresetDef
 		},
 		shadow: null,
 	},
+	"custom-shape": {
+		label: "Custom Shape",
+		transform: {
+			type: "overlay",
+			maxStageFraction: MAX_STAGE_FRACTION,
+			marginFraction: MARGIN_FRACTION,
+			minMargin: 0,
+			minSize: 0,
+			anchor: "bottom-right",
+			shape: "rect",
+		},
+		borderRadius: {
+			max: 999,
+			min: 0,
+			fraction: 0,
+		},
+		shadow: {
+			color: "rgba(0,0,0,0.35)",
+			blur: 24,
+			offsetX: 0,
+			offsetY: 10,
+		},
+	},
 };
 
 export const WEBCAM_LAYOUT_PRESETS = Object.entries(WEBCAM_LAYOUT_PRESET_MAP).map(
@@ -150,6 +299,7 @@ export function computeCompositeLayout(params: {
 	webcamSize?: Size | null;
 	layoutPreset?: WebcamLayoutPreset;
 	webcamPosition?: { cx: number; cy: number } | null;
+	customWebcamCornerRadius?: number;
 }): WebcamCompositeLayout | null {
 	const {
 		canvasSize,
@@ -158,6 +308,7 @@ export function computeCompositeLayout(params: {
 		webcamSize,
 		layoutPreset = "camera-bubble",
 		webcamPosition,
+		customWebcamCornerRadius,
 	} = params;
 	const { width: canvasWidth, height: canvasHeight } = canvasSize;
 	const { width: screenWidth, height: screenHeight } = screenSize;
@@ -255,15 +406,21 @@ export function computeCompositeLayout(params: {
 			y: webcamY,
 			width,
 			height,
-			borderRadius: isCircle
-				? Math.round(Math.min(width, height) / 2)
-				: Math.min(
-						preset.borderRadius.max,
-						Math.max(
-							preset.borderRadius.min,
-							Math.round(Math.min(width, height) * preset.borderRadius.fraction),
-						),
-					),
+			borderRadius:
+				layoutPreset === "custom-shape" && customWebcamCornerRadius !== undefined
+					? Math.min(
+							Math.round(Math.min(width, height) / 2),
+							Math.round((customWebcamCornerRadius * Math.min(width, height)) / 100),
+						)
+					: isCircle
+						? Math.round(Math.min(width, height) / 2)
+						: Math.min(
+								preset.borderRadius.max,
+								Math.max(
+									preset.borderRadius.min,
+									Math.round(Math.min(width, height) * preset.borderRadius.fraction),
+								),
+							),
 		},
 	};
 }

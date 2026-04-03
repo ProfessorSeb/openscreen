@@ -18,7 +18,21 @@
 		"selectPreset": "选择预设",
 		"pictureInPicture": "画中画",
 		"cameraBubble": "摄像头气泡",
-		"verticalStack": "垂直堆叠"
+		"verticalStack": "垂直堆叠",
+		"customShape": "自定义形状",
+		"shape": "形状",
+		"shape_rounded-rect": "圆角矩形",
+		"shape_circle": "圆形",
+		"shape_triangle": "三角形",
+		"shape_triangle-down": "倒三角",
+		"shape_diamond": "菱形",
+		"shape_hexagon": "六边形",
+		"shape_octagon": "八边形",
+		"shape_star": "星形",
+		"shape_shield": "盾形",
+		"cornerRadius": "圆角半径",
+		"borderWidth": "边框宽度",
+		"borderColor": "边框颜色"
 	},
 	"effects": {
 		"title": "视频效果",

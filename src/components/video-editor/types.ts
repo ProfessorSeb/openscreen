@@ -1,7 +1,7 @@
-import type { WebcamLayoutPreset } from "@/lib/compositeLayout";
+import type { WebcamClipShape, WebcamLayoutPreset } from "@/lib/compositeLayout";
 
 export type ZoomDepth = 1 | 2 | 3 | 4 | 5 | 6;
-export type { WebcamLayoutPreset };
+export type { WebcamClipShape, WebcamLayoutPreset };
 
 export const DEFAULT_WEBCAM_LAYOUT_PRESET: WebcamLayoutPreset = "camera-bubble";
 

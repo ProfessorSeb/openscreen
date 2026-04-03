@@ -18,7 +18,21 @@
 		"selectPreset": "Seleccionar predefinido",
 		"pictureInPicture": "Imagen en imagen",
 		"cameraBubble": "Burbuja de cámara",
-		"verticalStack": "Apilado vertical"
+		"verticalStack": "Apilado vertical",
+		"customShape": "Forma personalizada",
+		"shape": "Forma",
+		"shape_rounded-rect": "Rectángulo redondeado",
+		"shape_circle": "Círculo",
+		"shape_triangle": "Triángulo",
+		"shape_triangle-down": "Triángulo invertido",
+		"shape_diamond": "Diamante",
+		"shape_hexagon": "Hexágono",
+		"shape_octagon": "Octágono",
+		"shape_star": "Estrella",
+		"shape_shield": "Escudo",
+		"cornerRadius": "Radio de esquina",
+		"borderWidth": "Ancho de borde",
+		"borderColor": "Color de borde"
 	},
 	"effects": {
 		"title": "Efectos de video",

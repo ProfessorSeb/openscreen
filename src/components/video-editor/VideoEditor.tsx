@@ -85,6 +85,10 @@ export default function VideoEditor() {
 		aspectRatio,
 		webcamLayoutPreset,
 		webcamPosition,
+		webcamCornerRadius,
+		webcamBorderWidth,
+		webcamBorderColor,
+		webcamClipShape,
 	} = editorState;
 
 	// ── Non-undoable state
@@ -196,6 +200,10 @@ export default function VideoEditor() {
 				aspectRatio: normalizedEditor.aspectRatio,
 				webcamLayoutPreset: normalizedEditor.webcamLayoutPreset,
 				webcamPosition: normalizedEditor.webcamPosition,
+				webcamCornerRadius: normalizedEditor.webcamCornerRadius,
+				webcamBorderWidth: normalizedEditor.webcamBorderWidth,
+				webcamBorderColor: normalizedEditor.webcamBorderColor,
+				webcamClipShape: normalizedEditor.webcamClipShape,
 			});
 			setExportQuality(normalizedEditor.exportQuality);
 			setExportFormat(normalizedEditor.exportFormat);
@@ -265,6 +273,10 @@ export default function VideoEditor() {
 				aspectRatio,
 				webcamLayoutPreset,
 				webcamPosition,
+				webcamCornerRadius,
+				webcamBorderWidth,
+				webcamBorderColor,
+				webcamClipShape,
 				exportQuality,
 				exportFormat,
 				gifFrameRate,
@@ -288,6 +300,10 @@ export default function VideoEditor() {
 		aspectRatio,
 		webcamLayoutPreset,
 		webcamPosition,
+		webcamCornerRadius,
+		webcamBorderWidth,
+		webcamBorderColor,
+		webcamClipShape,
 		exportQuality,
 		exportFormat,
 		gifFrameRate,
@@ -381,6 +397,10 @@ export default function VideoEditor() {
 				aspectRatio,
 				webcamLayoutPreset,
 				webcamPosition,
+				webcamCornerRadius,
+				webcamBorderWidth,
+				webcamBorderColor,
+				webcamClipShape,
 				exportQuality,
 				exportFormat,
 				gifFrameRate,
@@ -435,6 +455,10 @@ export default function VideoEditor() {
 			aspectRatio,
 			webcamLayoutPreset,
 			webcamPosition,
+			webcamCornerRadius,
+			webcamBorderWidth,
+			webcamBorderColor,
+			webcamClipShape,
 			exportQuality,
 			exportFormat,
 			gifFrameRate,
@@ -1091,6 +1115,10 @@ export default function VideoEditor() {
 						annotationRegions,
 						webcamLayoutPreset,
 						webcamPosition,
+						webcamCornerRadius,
+						webcamBorderWidth,
+						webcamBorderColor,
+						webcamClipShape,
 						previewWidth,
 						previewHeight,
 						onProgress: (progress: ExportProgress) => {
@@ -1222,6 +1250,10 @@ export default function VideoEditor() {
 						annotationRegions,
 						webcamLayoutPreset,
 						webcamPosition,
+						webcamCornerRadius,
+						webcamBorderWidth,
+						webcamBorderColor,
+						webcamClipShape,
 						previewWidth,
 						previewHeight,
 						onProgress: (progress: ExportProgress) => {
@@ -1290,6 +1322,10 @@ export default function VideoEditor() {
 			aspectRatio,
 			webcamLayoutPreset,
 			webcamPosition,
+			webcamCornerRadius,
+			webcamBorderWidth,
+			webcamBorderColor,
+			webcamClipShape,
 			exportQuality,
 			handleExportSaved,
 		],
@@ -1474,6 +1510,10 @@ export default function VideoEditor() {
 											webcamVideoPath={webcamVideoPath || undefined}
 											webcamLayoutPreset={webcamLayoutPreset}
 											webcamPosition={webcamPosition}
+											webcamCornerRadius={webcamCornerRadius}
+											webcamBorderWidth={webcamBorderWidth}
+											webcamBorderColor={webcamBorderColor}
+											webcamClipShape={webcamClipShape}
 											onWebcamPositionChange={(pos) => updateState({ webcamPosition: pos })}
 											onWebcamPositionDragEnd={commitState}
 											onDurationChange={setDuration}
@@ -1613,6 +1653,16 @@ export default function VideoEditor() {
 								webcamPosition: preset === "vertical-stack" ? null : webcamPosition,
 							})
 						}
+						webcamCornerRadius={webcamCornerRadius}
+						onWebcamCornerRadiusChange={(radius) => updateState({ webcamCornerRadius: radius })}
+						onWebcamCornerRadiusCommit={() => commitState()}
+						webcamBorderWidth={webcamBorderWidth}
+						onWebcamBorderWidthChange={(width) => updateState({ webcamBorderWidth: width })}
+						onWebcamBorderWidthCommit={() => commitState()}
+						webcamBorderColor={webcamBorderColor}
+						onWebcamBorderColorChange={(color) => pushState({ webcamBorderColor: color })}
+						webcamClipShape={webcamClipShape}
+						onWebcamClipShapeChange={(shape) => pushState({ webcamClipShape: shape })}
 						videoElement={videoPlaybackRef.current?.video || null}
 						exportQuality={exportQuality}
 						onExportQualityChange={setExportQuality}

@@ -35,7 +35,12 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useScopedT } from "@/contexts/I18nContext";
 import { getAssetPath } from "@/lib/assetPath";
-import { WEBCAM_LAYOUT_PRESETS } from "@/lib/compositeLayout";
+import {
+	getCssClipPath,
+	WEBCAM_CLIP_SHAPES,
+	WEBCAM_LAYOUT_PRESETS,
+	type WebcamClipShape,
+} from "@/lib/compositeLayout";
 import type { ExportFormat, ExportQuality, GifFrameRate, GifSizePreset } from "@/lib/exporter";
 import { GIF_FRAME_RATES, GIF_SIZE_PRESETS } from "@/lib/exporter";
 import { cn } from "@/lib/utils";
@@ -59,6 +64,8 @@ const WALLPAPER_COUNT = 18;
 const WALLPAPER_RELATIVE = [
 	...Array.from({ length: WALLPAPER_COUNT }, (_, i) => `wallpapers/wallpaper${i + 1}.jpg`),
 	"wallpapers/solo.jpg",
+	"wallpapers/solo-mark.jpg",
+	"wallpapers/solo-dark.jpg",
 ];
 const GRADIENTS = [
 	"linear-gradient( 111.6deg,  rgba(114,167,232,1) 9.4%, rgba(253,129,82,1) 43.9%, rgba(253,129,82,1) 54.8%, rgba(249,202,86,1) 86.3% )",
@@ -143,6 +150,16 @@ interface SettingsPanelProps {
 	hasWebcam?: boolean;
 	webcamLayoutPreset?: WebcamLayoutPreset;
 	onWebcamLayoutPresetChange?: (preset: WebcamLayoutPreset) => void;
+	webcamCornerRadius?: number;
+	onWebcamCornerRadiusChange?: (radius: number) => void;
+	onWebcamCornerRadiusCommit?: () => void;
+	webcamBorderWidth?: number;
+	onWebcamBorderWidthChange?: (width: number) => void;
+	onWebcamBorderWidthCommit?: () => void;
+	webcamBorderColor?: string;
+	onWebcamBorderColorChange?: (color: string) => void;
+	webcamClipShape?: WebcamClipShape;
+	onWebcamClipShapeChange?: (shape: WebcamClipShape) => void;
 }
 
 export default SettingsPanel;
@@ -156,6 +173,8 @@ function getWebcamPresetLabel(
 			return t("layout.cameraBubble");
 		case "vertical-stack":
 			return t("layout.verticalStack");
+		case "custom-shape":
+			return t("layout.customShape");
 		default:
 			return t("layout.pictureInPicture");
 	}
@@ -225,6 +244,16 @@ export function SettingsPanel({
 	hasWebcam = false,
 	webcamLayoutPreset = "camera-bubble",
 	onWebcamLayoutPresetChange,
+	webcamCornerRadius = 50,
+	onWebcamCornerRadiusChange,
+	onWebcamCornerRadiusCommit,
+	webcamBorderWidth = 0,
+	onWebcamBorderWidthChange,
+	onWebcamBorderWidthCommit,
+	webcamBorderColor = "#ffffff",
+	onWebcamBorderColorChange,
+	webcamClipShape = "rounded-rect",
+	onWebcamClipShapeChange,
 }: SettingsPanelProps) {
 	const t = useScopedT("settings");
 	const [wallpaperPaths, setWallpaperPaths] = useState<string[]>([]);
@@ -634,6 +663,118 @@ export function SettingsPanel({
 										</SelectContent>
 									</Select>
 								</div>
+								{webcamLayoutPreset === "custom-shape" && (
+									<div className="mt-2 space-y-2">
+										<div className="p-2 rounded-lg bg-white/5 border border-white/5">
+											<div className="text-[10px] font-medium text-slate-300 mb-1.5">
+												{t("layout.shape")}
+											</div>
+											<div className="grid grid-cols-5 gap-1">
+												{WEBCAM_CLIP_SHAPES.map((shape) => {
+													const clipPath = getCssClipPath(shape);
+													const isCircleShape = shape === "circle";
+													return (
+														<button
+															key={shape}
+															type="button"
+															className={cn(
+																"aspect-square rounded p-1.5 transition-colors",
+																webcamClipShape === shape
+																	? "bg-[#34B27B]/30 ring-1 ring-[#34B27B]"
+																	: "bg-white/5 hover:bg-white/10",
+															)}
+															onClick={() => onWebcamClipShapeChange?.(shape)}
+															title={t(`layout.shape_${shape}`)}
+														>
+															<div
+																className="w-full h-full bg-slate-300"
+																style={{
+																	clipPath: clipPath ?? undefined,
+																	borderRadius: isCircleShape
+																		? "50%"
+																		: shape === "rounded-rect"
+																			? "20%"
+																			: undefined,
+																}}
+															/>
+														</button>
+													);
+												})}
+											</div>
+										</div>
+										{(webcamClipShape === "rounded-rect" || webcamClipShape === "circle") && (
+											<div className="p-2 rounded-lg bg-white/5 border border-white/5">
+												<div className="flex items-center justify-between mb-1">
+													<div className="text-[10px] font-medium text-slate-300">
+														{t("layout.cornerRadius")}
+													</div>
+													<span className="text-[10px] text-slate-500 font-mono">
+														{webcamCornerRadius}%
+													</span>
+												</div>
+												<Slider
+													value={[webcamCornerRadius]}
+													onValueChange={(values) => onWebcamCornerRadiusChange?.(values[0])}
+													onValueCommit={() => onWebcamCornerRadiusCommit?.()}
+													min={0}
+													max={100}
+													step={1}
+													className="w-full [&_[role=slider]]:bg-[#34B27B] [&_[role=slider]]:border-[#34B27B] [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
+												/>
+											</div>
+										)}
+										<div className="p-2 rounded-lg bg-white/5 border border-white/5">
+											<div className="flex items-center justify-between mb-1">
+												<div className="text-[10px] font-medium text-slate-300">
+													{t("layout.borderWidth")}
+												</div>
+												<span className="text-[10px] text-slate-500 font-mono">
+													{webcamBorderWidth}px
+												</span>
+											</div>
+											<Slider
+												value={[webcamBorderWidth]}
+												onValueChange={(values) => onWebcamBorderWidthChange?.(values[0])}
+												onValueCommit={() => onWebcamBorderWidthCommit?.()}
+												min={0}
+												max={20}
+												step={1}
+												className="w-full [&_[role=slider]]:bg-[#34B27B] [&_[role=slider]]:border-[#34B27B] [&_[role=slider]]:h-3 [&_[role=slider]]:w-3"
+											/>
+										</div>
+										{webcamBorderWidth > 0 && (
+											<div className="p-2 rounded-lg bg-white/5 border border-white/5">
+												<div className="text-[10px] font-medium text-slate-300 mb-1.5">
+													{t("layout.borderColor")}
+												</div>
+												<Block
+													color={webcamBorderColor}
+													colors={[
+														"#ffffff",
+														"#000000",
+														"#f44336",
+														"#e91e63",
+														"#9c27b0",
+														"#673ab7",
+														"#3f51b5",
+														"#2196f3",
+														"#03a9f4",
+														"#00bcd4",
+														"#009688",
+														"#4caf50",
+														"#8bc34a",
+														"#cddc39",
+														"#ffeb3b",
+														"#ffc107",
+														"#ff9800",
+														"#ff5722",
+													]}
+													onChange={(color) => onWebcamBorderColorChange?.(color.hex)}
+												/>
+											</div>
+										)}
+									</div>
+								)}
 							</AccordionContent>
 						</AccordionItem>
 					)}

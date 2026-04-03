@@ -21,6 +21,7 @@ interface LayoutParams {
 	webcamDimensions?: Size | null;
 	webcamLayoutPreset?: WebcamLayoutPreset;
 	webcamPosition?: { cx: number; cy: number } | null;
+	customWebcamCornerRadius?: number;
 }
 
 interface LayoutResult {
@@ -47,6 +48,7 @@ export function layoutVideoContent(params: LayoutParams): LayoutResult | null {
 		webcamDimensions,
 		webcamLayoutPreset,
 		webcamPosition,
+		customWebcamCornerRadius,
 	} = params;
 
 	const videoWidth = lockedVideoDimensions?.width || videoElement.videoWidth;
@@ -94,6 +96,7 @@ export function layoutVideoContent(params: LayoutParams): LayoutResult | null {
 		webcamSize: webcamDimensions,
 		layoutPreset: webcamLayoutPreset,
 		webcamPosition,
+		customWebcamCornerRadius,
 	});
 
 	if (!compositeLayout) {

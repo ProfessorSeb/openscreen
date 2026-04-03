@@ -16,6 +16,7 @@ import {
 	DEFAULT_ZOOM_DEPTH,
 	type SpeedRegion,
 	type TrimRegion,
+	type WebcamClipShape,
 	type WebcamLayoutPreset,
 	type WebcamPosition,
 	type ZoomRegion,
@@ -26,6 +27,8 @@ const WALLPAPER_COUNT = 18;
 export const WALLPAPER_PATHS = [
 	...Array.from({ length: WALLPAPER_COUNT }, (_, i) => `/wallpapers/wallpaper${i + 1}.jpg`),
 	"/wallpapers/solo.jpg",
+	"/wallpapers/solo-mark.jpg",
+	"/wallpapers/solo-dark.jpg",
 ];
 
 export const PROJECT_VERSION = 2;
@@ -45,6 +48,10 @@ export interface ProjectEditorState {
 	aspectRatio: AspectRatio;
 	webcamLayoutPreset: WebcamLayoutPreset;
 	webcamPosition: WebcamPosition | null;
+	webcamCornerRadius: number;
+	webcamBorderWidth: number;
+	webcamBorderColor: string;
+	webcamClipShape: WebcamClipShape;
 	exportQuality: ExportQuality;
 	exportFormat: ExportFormat;
 	gifFrameRate: GifFrameRate;
@@ -350,9 +357,33 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 		webcamLayoutPreset:
 			editor.webcamLayoutPreset === "camera-bubble" ||
 			editor.webcamLayoutPreset === "vertical-stack" ||
-			editor.webcamLayoutPreset === "picture-in-picture"
+			editor.webcamLayoutPreset === "picture-in-picture" ||
+			editor.webcamLayoutPreset === "custom-shape"
 				? editor.webcamLayoutPreset
 				: DEFAULT_WEBCAM_LAYOUT_PRESET,
+		webcamCornerRadius: isFiniteNumber(editor.webcamCornerRadius)
+			? clamp(editor.webcamCornerRadius, 0, 100)
+			: 50,
+		webcamBorderWidth: isFiniteNumber(editor.webcamBorderWidth)
+			? clamp(editor.webcamBorderWidth, 0, 20)
+			: 0,
+		webcamBorderColor:
+			typeof editor.webcamBorderColor === "string" ? editor.webcamBorderColor : "#ffffff",
+		webcamClipShape: (
+			[
+				"rounded-rect",
+				"circle",
+				"triangle",
+				"triangle-down",
+				"diamond",
+				"hexagon",
+				"octagon",
+				"star",
+				"shield",
+			] as string[]
+		).includes(editor.webcamClipShape as string)
+			? (editor.webcamClipShape as WebcamClipShape)
+			: "rounded-rect",
 		webcamPosition:
 			editor.webcamPosition &&
 			typeof editor.webcamPosition === "object" &&

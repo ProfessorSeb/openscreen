@@ -18,7 +18,21 @@
 		"selectPreset": "Select preset",
 		"pictureInPicture": "Picture in Picture",
 		"cameraBubble": "Camera Bubble",
-		"verticalStack": "Vertical Stack"
+		"verticalStack": "Vertical Stack",
+		"customShape": "Custom Shape",
+		"shape": "Shape",
+		"shape_rounded-rect": "Rounded Rectangle",
+		"shape_circle": "Circle",
+		"shape_triangle": "Triangle",
+		"shape_triangle-down": "Triangle Down",
+		"shape_diamond": "Diamond",
+		"shape_hexagon": "Hexagon",
+		"shape_octagon": "Octagon",
+		"shape_star": "Star",
+		"shape_shield": "Shield",
+		"cornerRadius": "Corner Radius",
+		"borderWidth": "Border Width",
+		"borderColor": "Border Color"
 	},
 	"effects": {
 		"title": "Video Effects",
